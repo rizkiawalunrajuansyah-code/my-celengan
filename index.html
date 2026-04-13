@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Celengan iPhone 13</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+  body {
+    font-family: Arial;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+    margin: 0;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+    padding: 20px;
+    border-radius: 20px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    animation: fadeIn 1s ease;
+  }
+
+  @keyframes fadeIn {
+    from {opacity: 0; transform: scale(0.9);}
+    to {opacity: 1; transform: scale(1);}
+  }
+
+  h2 {
+    margin-bottom: 5px;
+  }
+
+  input {
+    width: 90%;
+    padding: 8px;
+    margin: 6px 0;
+    border-radius: 10px;
+    border: none;
+    text-align: center;
+  }
+
+  button {
+    margin: 5px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  button:active {
+    transform: scale(0.9);
+  }
+
+  .nabung { background: #00c853; }
+  .ambil { background: #ff5252; }
+  .reset { background: #616161; }
+  .masuk { background: #ff9800; }
+
+  .saldo {
+    font-size: 28px;
+    margin: 10px 0;
+    animation: pop 0.3s;
+  }
+
+  @keyframes pop {
+    0% {transform: scale(1.2);}
+    100% {transform: scale(1);}
+  }
+
+  .progress {
+    height: 12px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00ffcc, #00c853);
+    transition: 0.5s;
+  }
+
+  .riwayat {
+    margin-top: 10px;
+    max-height: 130px;
+    overflow-y: auto;
+    text-align: left;
+    font-size: 13px;
+  }
+
+  .item {
+    padding: 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    animation: slide 0.3s ease;
+  }
+
+  @keyframes slide {
+    from {transform: translateX(-20px); opacity: 0;}
+    to {transform: translateX(0); opacity: 1;}
+  }
+
+  .tanggal {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>📱 iPhone 13</h2>
+  <p>Target: Rp 7.000.000</p>
+
+  <input id="inputManual" placeholder="Contoh: 20K / 100K / 1M">
+  <button class="masuk" onclick="nabungManual()">Masukkan</button>
+
+  <div class="saldo" id="saldo">Rp 0</div>
+  <small id="hari">Hari ke-0</small>
+
+  <div class="progress">
+    <div class="bar" id="bar"></div>
+  </div>
+
+  <button class="nabung" onclick="nabung(20000)">+20K</button>
+  <button class="ambil" onclick="ambil()">Ambil</button>
+  <button class="reset" onclick="resetData()">Reset</button>
+
+  <div class="riwayat" id="riwayat"></div>
+</div>
+
+<script>
+let tabungan = 0;
+let hari = 0;
+const target = 7000000;
+
+// AUTO SAVE
+if(localStorage.getItem("data")){
+  let data = JSON.parse(localStorage.getItem("data"));
+  tabungan = data.tabungan;
+  hari = data.hari;
+  document.getElementById("riwayat").innerHTML = data.riwayat;
+}
+
+function simpan(){
+  localStorage.setItem("data", JSON.stringify({
+    tabungan, hari,
+    riwayat: document.getElementById("riwayat").innerHTML
+  }));
+}
+
+// FORMAT
+function parseUang(input){
+  input = input.toUpperCase().replace(/\s/g,"");
+  if(input.endsWith("K")) return parseInt(input)*1000;
+  if(input.endsWith("M")) return parseInt(input)*1000000;
+  return parseInt(input);
+}
+
+function waktu(){
+  return new Date().toLocaleString();
+}
+
+function update(){
+  document.getElementById("saldo").innerText = "Rp " + tabungan.toLocaleString();
+  document.getElementById("hari").innerText = "Hari ke-" + hari;
+  document.getElementById("bar").style.width = (tabungan/target*100)+"%";
+  simpan();
+}
+
+function riwayat(teks){
+  let div = document.createElement("div");
+  div.className="item";
+  div.innerHTML = `<div>${teks}</div><div class="tanggal">${waktu()}</div>`;
+  document.getElementById("riwayat").prepend(div);
+}
+
+function nabungManual(){
+  let val = parseUang(document.getElementById("inputManual").value);
+  if(val>0){
+    tabungan+=val; hari++;
+    update(); riwayat("➕ "+val.toLocaleString());
+  }
+}
+
+function nabung(n){
+  tabungan+=n; hari++;
+  update(); riwayat("➕ "+n.toLocaleString());
+}
+
+function ambil(){
+  let val = parseUang(prompt("Ambil (50K dll)"));
+  if(val>0 && val<=tabungan){
+    tabungan-=val;
+    update(); riwayat("➖ "+val.toLocaleString());
+  }
+}
+
+function resetData(){
+  if(confirm("Reset semua?")){
+    tabungan=0; hari=0;
+    document.getElementById("riwayat").innerHTML="";
+    localStorage.clear();
+    update();
+  }
+}
+
+update();
+
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>
